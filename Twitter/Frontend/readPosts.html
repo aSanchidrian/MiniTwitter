@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css"
+      integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/MaterialDesign-Webfont/5.3.45/css/materialdesignicons.css"
+      integrity="sha256-NAxhqDvtY0l4xn+YVa6WjAcmd94NNfttjNsDmNatFVc="
+      crossorigin="anonymous"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      footer {
+        background-color: #f5f8fa;
+        color: #657786;
+        text-align: center;
+        padding: 1em;
+      }
+      body {
+        background-color: #00bfff;
+      }
+      .card {
+        background-color: #87cefa;
+      }
+    </style>
+    <title>Twitter</title>
+    <script>
+      function logout() {
+        localStorage.removeItem("user");
+        localStorage.removeItem("email");
+        location.replace("login.html");
+      }
+
+      $(document).ready(function () {
+        var user = localStorage.getItem("user");
+        var email = localStorage.getItem("email");
+
+        var messId = null;
+
+        if (!user) {
+          location.replace("login.html");
+        }
+
+        $("#user").html("@" + user);
+        $("#email").html(email);
+
+        var postLikes = {};
+        var postDislikes = {};
+
+        // function test(e)
+        // {
+        //   if(e.target.id.indexOf(""))
+        // }
+
+        function setLikes(e) {
+          var postId = e.target.id.split("-")[1];
+          // var mId = document.getElementsByName();
+
+          if (!postLikes[postId]) {
+            postLikes[postId] = 0;
+          }
+          postLikes[postId] += 1;
+          e.target.innerHTML = "👍 " + postLikes[postId];
+
+          // funcion para los likes
+          // var sendPost = $.post(
+          //   "https://ksxcpdw6xrtcc25xrdlbc2lf7q0bdqrg.lambda-url.us-east-1.on.aws/",
+          //   {
+          //     messageId: messId,
+          //     likes: postLikes[postId],
+          //     dislikes: postDislikes[postId],
+          //   }
+          // )
+          //   .done((response) => {
+          //     console.log("ok");
+          //   })
+          //   .fail((error) => {
+          //     console.error("ERROR");
+          //   });
+        }
+
+        function setDislikes(e) {
+          var postID = e.target.id.split("-")[1];
+
+          if (!postDislikes[postID]) {
+            postDislikes[postID] = 0;
+          }
+          postDislikes[postID] += 1;
+          e.target.innerHTML = "👎 " + postDislikes[postID];
+        }
+
+        var sendPost = $.post(
+          "https://v73333fs6zgkfvnn67lb3bnbpe0oekix.lambda-url.us-east-1.on.aws/",
+
+          { user: user },
+          function (data) {
+            // function jsonEscape(str)  {
+            //          return str.replace(/\n/g, "\\\\n").replace(/\r/g, "\\\\r").replace(/\t/g, "\\\\t").replace(/\\/g,"");
+            // }
+            var json = data;
+            var likeCount = 0;
+            var dislikeCount = 0;
+            // alert("resultado " + JSON.stringify(json));
+            for (let i in json.posts) {
+              var ul = document.getElementById("comment_list");
+              var li = document.createElement("li");
+              li.setAttribute("name", json.posts[i].messageId);
+              messId = json.posts[i].messageId;
+              var comment = document.createElement("p");
+
+              comment.innerText = user + " dice:" + json.posts[i].comment;
+
+              var mediaElement = createMediaElement(json.posts[i].attachment);
+
+              var buttonDiv = document.createElement("div");
+              buttonDiv.setAttribute("style", "display: block;");
+
+              // botones del like dislike
+              var likeButton = document.createElement("button");
+              likeButton.setAttribute("type", "button");
+              likeButton.setAttribute("class", "btn btn-success");
+              likeButton.setAttribute("id", "likeButton-" + i);
+              likeButton.addEventListener("click", setLikes);
+              likeButton.innerHTML = "👍" + json.posts[i].likes;
+
+              var dislikeButton = document.createElement("button");
+              dislikeButton.setAttribute("type", "button");
+              dislikeButton.setAttribute("class", "btn btn-danger");
+              dislikeButton.setAttribute("id", "dislikeButton-" + i);
+              dislikeButton.addEventListener("click", setDislikes);
+              dislikeButton.innerHTML = "👎" + json.posts[i].dislikes;
+
+              var br = document.createElement("br");
+              var br2 = document.createElement("br");
+              var br3 = document.createElement("br");
+
+              ul.appendChild(br2);
+              ul.appendChild(li);
+              li.appendChild(comment);
+              li.appendChild(mediaElement);
+              li.appendChild(br);
+              li.appendChild(br3);
+              li.appendChild(buttonDiv);
+              buttonDiv.appendChild(likeButton);
+              buttonDiv.appendChild(dislikeButton);
+              // li.appendChild(likeButton);
+              // li.appendChild(dislikeButton);
+            }
+          }
+        );
+
+        function createMediaElement(path) {
+          var extension = path.split(".").pop();
+          var mediaElement;
+
+          if (extension === "mp4") {
+            mediaElement = document.createElement("video");
+            mediaElement.setAttribute("width", "320");
+            mediaElement.setAttribute("height", "320");
+            mediaElement.setAttribute("controls", "");
+
+            var source = document.createElement("source");
+            source.setAttribute("src", path);
+            source.setAttribute("type", "video/mp4");
+
+            mediaElement.appendChild(source);
+          } else if (extension === "jpg" || extension === "png") {
+            mediaElement = document.createElement("img");
+            mediaElement.setAttribute("src", path);
+            mediaElement.setAttribute("width", "320");
+            mediaElement.setAttribute("height", "320");
+          }
+
+          return mediaElement;
+        }
+      });
+    </script>
+  </head>
+  <header>
+    <div class="row mb-2">
+      <div class="col-12 text-center pt-3">
+        <h1>Twitter-LSAS</h1>
+        <p><b>La red social de S.S.D.D</b></p>
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Twitter-logo.svg/2491px-Twitter-logo.svg.png"
+          alt="twitter"
+          width="200"
+          height="100"
+        />
+      </div>
+    </div>
+  </header>
+  <body>
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex align-items-start">
+          <img
+            src="https://bootdey.com/img/Content/avatar/avatar1.png"
+            class="rounded-circle avatar-lg img-thumbnail"
+            alt="profile-image"
+          />
+          <div class="w-100 ms-3">
+            <h1 id="user" class="my-0"></h1>
+            <button
+              type="button"
+              class="btn btn-soft-primary btn-xs waves-effect mb-2 waves-light"
+            >
+              Follow
+            </button>
+            <button
+              type="button"
+              class="btn btn-soft-success btn-xs waves-effect mb-2 waves-light"
+            >
+              Message
+            </button>
+            <button
+              class="btn btn-danger btn-lg"
+              type="submit"
+              onclick="logout()"
+            >
+              Log out
+            </button>
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <p class="text-muted mb-2 font-13">
+            <strong>Mobile :</strong><span class="ms-2">(123) 123 1234</span>
+          </p>
+
+          <p class="text-muted mb-2 font-13">
+            <strong>Email :</strong>
+            <span id="email" class="ms-2"></span>
+          </p>
+
+          <p class="text-muted mb-1 font-13">
+            <strong>Location :</strong> <span class="ms-2">ESP</span>
+          </p>
+        </div>
+
+        <ul class="social-list list-inline mt-3 mb-0">
+          <li class="list-inline-item">
+            <a
+              href="javascript: void(0);"
+              class="social-list-item text-center border-primary text-primary"
+              ><i class="mdi mdi-facebook"></i
+            ></a>
+          </li>
+          <li class="list-inline-item">
+            <a
+              href="javascript: void(0);"
+              class="social-list-item text-center border-danger text-danger"
+              ><i class="mdi mdi-google"></i
+            ></a>
+          </li>
+          <li class="list-inline-item">
+            <a
+              href="javascript: void(0);"
+              class="social-list-item text-center border-info text-info"
+              ><i class="mdi mdi-twitter"></i
+            ></a>
+          </li>
+          <li class="list-inline-item">
+            <a
+              href="javascript: void(0);"
+              class="
+                social-list-item
+                text-center
+                border-secondary
+                text-secondary
+              "
+              ><i class="mdi mdi-github"></i
+            ></a>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <!-- end card -->
+
+    <div class="text-center">
+      <h1 id="user"></h1>
+      <a class="btn btn-primary" href="postComment.html" role="button"
+        >Post comment</a
+      >
+      <ul id="comment_list"></ul>
+    </div>
+  </body>
+  <footer>Copyright © 2023 Twitter-LSAS</footer>
+</html>
